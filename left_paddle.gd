@@ -2,7 +2,6 @@ extends KinematicBody2D
 
 export (int) var paddle_speed = 200
 var screen_size
-
 var velocity = Vector2.ZERO
 
 func _ready():
@@ -10,16 +9,13 @@ func _ready():
 
 func get_input():
 	velocity = Vector2.ZERO
-	if Input.is_action_pressed("up"):
+	if Input.is_action_pressed("up") and position.y > 25:
 		velocity.y -= 1
-	elif Input.is_action_pressed("down"):
+	elif Input.is_action_pressed("down") and position.y < screen_size.y - 25:
 		velocity.y += 1
 	velocity = velocity.normalized() * paddle_speed
 
-func _process(delta):
+func _physics_process(delta):
 	get_input()
-	
 	position += velocity * delta
-	position.y = clamp(position.y, 0, screen_size.y)
-	
-	velocity = move_and_collide(velocity * delta)
+	move_and_collide(velocity * delta)
