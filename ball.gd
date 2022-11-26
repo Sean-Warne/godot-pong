@@ -2,6 +2,9 @@ extends KinematicBody2D
 
 const INITIAL_SPEED = 200
 const INITIAL_POSITION = Vector2(320, 200)
+const SPEED_INCREMENT = 50
+const DIRECTION_X = [-1, 1]
+const SCORE_LIMIT = 10
 
 var screen_size
 var velocity  = Vector2()
@@ -12,14 +15,6 @@ var right_score = 0
 var bounces = 0
 
 var rng = RandomNumberGenerator.new()
-
-func reset():
-	# reset ball
-	rng.randomize()
-	ball_speed = INITIAL_SPEED
-	position   = Vector2(320, rng.randf_range(100, 300))
-	velocity  = Vector2(-1, rng.randf_range(-.7, .7)) * ball_speed
-	show()
 
 func _ready():
 	screen_size = get_viewport_rect().size
@@ -41,39 +36,70 @@ func _physics_process(delta):
 	# paddle
 	var collision = move_and_collide(velocity * delta)
 	if collision:
-		velocity = velocity.bounce(collision.normal)
-		ball_speed *= 1.2
+		rng.randomize()
 		
-		bounces += 1
-		get_parent().get_node("bounces").text = str(bounces)
+		# move the ball in the direction the paddle is travelling
+		var paddle_velocity = get_parent().get_node("left_paddle").velocity.y
+		if paddle_velocity != 0:
+			velocity.y += (get_parent().get_node("left_paddle").velocity.y / 10)
+		else:
+			velocity.y += rng.randf_range(-1, 1)
+			
+		velocity.x *= -1
 		
-#		rng.randomize()
-#		# move the ball in the direction the paddle is travelling
-#		var paddle_velocity = get_parent().get_node("left_paddle").velocity.y
-#		if paddle_velocity != 0:
-#			velocity.y += (get_parent().get_node("left_paddle").velocity.y / 10)
-#		else:
-#			velocity.y *= rng.randf_range(-.7, .7)
-#		velocity.x *= rng.randf_range(-.7, .7)
+		print("(x=" + str(velocity.x) + ", y=" + str(velocity.y) + ")")
+		
+		ball_speed += SPEED_INCREMENT
+		
+		set_bounces(bounces + 1)
 
 	# scoring
 	if position.x < 0:
 		right_score += 1
 		get_parent().get_node("right_score").text = str(right_score)
-		if right_score == 3:
+		if right_score == SCORE_LIMIT:
 			print("YOU LOSE")
 			game_over()
 		else:
 			reset()
 	elif position.x > 640:
 		left_score += 1
-		if left_score == 10:
+		if left_score == SCORE_LIMIT:
 			print("YOU WIN")
 			game_over()
 		else:
 			reset()
 		get_parent().get_node("left_score").text = str(left_score)
 		reset()
+
+func reset():
+	# reset ball
+	print("RESET")
+	rng.randomize()
+	ball_speed = INITIAL_SPEED
+	position   = Vector2(320, rng.randf_range(100, 300))
+	velocity  = Vector2(
+			DIRECTION_X[randi() % DIRECTION_X.size()],
+			rng.randf_range(-.7, .7)
+		) * ball_speed
+	set_bounces(0)
+	show()
+
+func set_score(left_or_right, value):
+	if left_or_right == "left":
+		left_score = value
+		get_parent().get_node("left_score").text = str(left_score)
+	elif left_or_right == "right":
+		right_score = value
+		get_parent().get_node("right_score").text = str(right_score)
+
+func set_bounces(value):
+	bounces = value
+	get_parent().get_node("bounces").text = str(bounces)
+	
+	# set high score bounces
+	if bounces > int(get_parent().get_node("bounces_high").text):
+		get_parent().get_node("bounces_high").text = str(bounces)
 
 func game_over():
 	position = INITIAL_POSITION
@@ -82,12 +108,7 @@ func game_over():
 
 func _on_Button_pressed():
 	get_parent().get_node("Button").visible = false
-	
-	right_score = 0
-	left_score = 0
-	bounces = 0
-	get_parent().get_node("left_score").text = str(left_score)
-	get_parent().get_node("right_score").text = str(right_score)
-	get_parent().get_node("bounces").text = str(bounces)
-	
+	set_score("left", 0)
+	set_score("right", 0)
+	set_bounces(0)
 	reset()
