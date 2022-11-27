@@ -12,12 +12,16 @@ config_version=4
 
 config/name="Pong"
 run/main_scene="res://game.tscn"
-config/icon="res://icon.png"
 
 [display]
 
 window/size/width=640
 window/size/height=400
+window/size/resizable=false
+
+[global]
+
+resize=false
 
 [gui]
 

@@ -1,5 +1,6 @@
 extends KinematicBody2D
 
+const INITIAL_POS = Vector2(573, 200)
 const ACCELERATION = 500
 const FRICTION = 500
 
@@ -9,6 +10,8 @@ var ball_pos
 var follow_speed
 var velocity = Vector2.ZERO
 var input_vector = Vector2.ZERO
+
+var game_in_play
 
 onready var screen_size = get_viewport_rect().size
 
@@ -37,6 +40,8 @@ func move(delta):
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
 
 func _physics_process(delta):
-	move(delta)
+	if get_parent().get_node("ball").game_in_play:
+		move(delta)
+	
 	position += velocity * delta
 	move_and_collide(velocity * delta)

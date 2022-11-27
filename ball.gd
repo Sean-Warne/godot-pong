@@ -14,17 +14,20 @@ var left_score = 0
 var right_score = 0
 var bounces = 0
 
+var game_in_play = false
+
 var rng = RandomNumberGenerator.new()
 
 func _ready():
 	screen_size = get_viewport_rect().size
 	
-	get_parent().get_node("Button").visible = false
-	get_parent().get_node("left_score").text = str(left_score)
-	get_parent().get_node("right_score").text = str(right_score)
-	get_parent().get_node("bounces").text = str(bounces)
+	get_parent().get_node("start_button").visible = true
+	get_parent().get_node("quit_button").visible = true
+	get_parent().get_node("game_over_label").visible = false
 	
-	reset()
+	set_score("left", 0)
+	set_score("right", 0)
+	set_bounces(0)
 
 func _physics_process(delta):
 	velocity = velocity.normalized() * ball_speed
@@ -36,18 +39,18 @@ func _physics_process(delta):
 	# paddle
 	var collision = move_and_collide(velocity * delta)
 	if collision:
+		$AudioStreamPlayer2D.play()
+		
 		rng.randomize()
 		
 		# move the ball in the direction the paddle is travelling
 		var paddle_velocity = get_parent().get_node("left_paddle").velocity.y
 		if paddle_velocity != 0:
-			velocity.y += (get_parent().get_node("left_paddle").velocity.y / 10)
+			velocity.y += (get_parent().get_node("left_paddle").velocity.y / 5)
 		else:
-			velocity.y += rng.randf_range(-1, 1)
+			velocity.y += rng.randf_range(-100, 100)
 			
 		velocity.x *= -1
-		
-		print("(x=" + str(velocity.x) + ", y=" + str(velocity.y) + ")")
 		
 		ball_speed += SPEED_INCREMENT
 		
@@ -55,26 +58,20 @@ func _physics_process(delta):
 
 	# scoring
 	if position.x < 0:
-		right_score += 1
-		get_parent().get_node("right_score").text = str(right_score)
-		if right_score == SCORE_LIMIT:
-			print("YOU LOSE")
+		set_score("right", right_score + 1)
+		if right_score >= SCORE_LIMIT:
 			game_over()
 		else:
 			reset()
 	elif position.x > 640:
-		left_score += 1
-		if left_score == SCORE_LIMIT:
-			print("YOU WIN")
+		set_score("left", left_score + 1)
+		if left_score >= SCORE_LIMIT:
 			game_over()
 		else:
 			reset()
-		get_parent().get_node("left_score").text = str(left_score)
-		reset()
 
 func reset():
 	# reset ball
-	print("RESET")
 	rng.randomize()
 	ball_speed = INITIAL_SPEED
 	position   = Vector2(320, rng.randf_range(100, 300))
@@ -88,10 +85,10 @@ func reset():
 func set_score(left_or_right, value):
 	if left_or_right == "left":
 		left_score = value
-		get_parent().get_node("left_score").text = str(left_score)
+		get_parent().get_node("left_score").bbcode_text = "[center]" + str(left_score) + "[/center]"
 	elif left_or_right == "right":
 		right_score = value
-		get_parent().get_node("right_score").text = str(right_score)
+		get_parent().get_node("right_score").bbcode_text = "[center]" + str(right_score) + "[/center]"
 
 func set_bounces(value):
 	bounces = value
@@ -104,11 +101,43 @@ func set_bounces(value):
 func game_over():
 	position = INITIAL_POSITION
 	velocity = Vector2.ZERO
-	get_parent().get_node("Button").visible = true
+	game_in_play = false
+	
+	get_parent().get_node("left_paddle").velocity = Vector2.ZERO
+	get_parent().get_node("right_paddle").velocity = Vector2.ZERO
+	
+	if left_score > right_score:
+		get_parent().get_node("game_over_label").rect_position.x = 60
+		get_parent().get_node("game_over_label").rect_position.y = 83
+	else:
+		get_parent().get_node("game_over_label").rect_position.x = 378
+		get_parent().get_node("game_over_label").rect_position.y = 83
+		
+	get_parent().get_node("start_button").visible = true
+	get_parent().get_node("quit_button").visible = true
+	get_parent().get_node("game_over_label").visible = true
 
-func _on_Button_pressed():
-	get_parent().get_node("Button").visible = false
+func _on_start_button_pressed():
+	game_in_play = true
+	
+	get_parent().get_node("left_paddle").position = get_parent().get_node("left_paddle").INITIAL_POS
+	get_parent().get_node("right_paddle").position = get_parent().get_node("right_paddle").INITIAL_POS
+	
+	get_parent().get_node("start_button/start_button_click").play()
+	
+	get_parent().get_node("start_button").visible = false
+	get_parent().get_node("quit_button").visible = false
+	get_parent().get_node("game_over_label").visible = false
+	
+	print(left_score)
+	print(right_score)
+	
 	set_score("left", 0)
 	set_score("right", 0)
 	set_bounces(0)
+	
 	reset()
+
+func _on_quit_button_pressed():
+	get_parent().get_node("quit_button/quit_button_click").play()
+	get_tree().quit()

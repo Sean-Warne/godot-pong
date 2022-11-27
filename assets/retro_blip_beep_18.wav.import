@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/retro_blip_beep_18.wav-ba3ba05c827101a52a9e91a430dc4e9c.sample"
+
+[deps]
+
+source_file="res://assets/retro_blip_beep_18.wav"
+dest_files=[ "res://.import/retro_blip_beep_18.wav-ba3ba05c827101a52a9e91a430dc4e9c.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0
